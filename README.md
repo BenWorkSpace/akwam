@@ -1,82 +1,171 @@
-# Content Scraper for Akwam
+# Akwam Content Scraper API
 
-This repository contains an asynchronous Python scraper designed to retrieve content information, search for media, and fetch download URLs from the Akwam website. The tool uses `aiohttp` for making asynchronous HTTP requests and `BeautifulSoup` for parsing HTML content.
+This FastAPI-based web application provides an API for searching, retrieving detailed content information, download URLs, and episode lists from the Akwam website. It offers asynchronous endpoints to interact with the site’s data and return results in JSON format.
+
+## Features
+
+- **Search Content**: Search for movies or series on Akwam.
+- **Retrieve Content Information**: Get detailed information about specific content such as title, poster, and metadata.
+- **Get Download URLs**: Retrieve a list of direct download links, including file sizes, for specific content.
+- **List Episodes**: Fetch a list of episodes for a specific season of a series, including episode title, thumbnail, and URL.
 
 ## Requirements
 
 - Python 3.7+
-- `aiohttp` for handling asynchronous HTTP requests
-- `beautifulsoup4` for parsing HTML
-- `lxml` for HTML parsing
+- Required Python packages:
+  - `fastapi`
+  - `uvicorn`
+  - `aiohttp`
+  - `beautifulsoup4`
+  - `lxml`
 
-### Install the required dependencies:
+Install the required dependencies using the following command:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Features
+## How to Run the API
 
-1. **Search for Media**
-   - You can search for movies or series by providing a query and search type.
-   
-2. **Fetch Media Information**
-   - Retrieve detailed information about specific media content, such as title, poster, and additional metadata.
-   
-3. **Get Content Download URLs**
-   - Extract a list of direct download links, including file sizes, from the content page.
+1. Save the code to a file named `main.py`.
 
-4. **Retrieve Episodes of a Series**
-   - Fetch a list of episodes for a specific season of a series, including their titles, URLs, and thumbnails.
+2. Run the FastAPI application using Uvicorn:
 
-## Usage
+```bash
+uvicorn main:app --reload
+```
+
+3. The API will be accessible at `http://127.0.0.1:8000`.
+
+4. You can access the interactive API documentation at `http://127.0.0.1:8000/docs`.
+
+## Endpoints
+
+### Root Endpoint
+
+- **GET /**  
+  Returns a welcome message to check if the API is running.
+  
+  Example:
+
+  ```bash
+  curl http://127.0.0.1:8000/
+  ```
+
+  **Response**:
+  ```json
+  {
+      "message": "Welcome to the Akwam Content Scraper API"
+  }
+  ```
 
 ### 1. Search for Content
 
-```python
-results = await search("movie_name", search_type="movie", page=1)
-```
+- **GET /search/**  
+  Search for movies or series on Akwam based on a query.
 
-- `query`: The name of the content you're searching for.
-- `search_type`: The type of content to search for (either `movie` or `series`).
-- `page`: Optional, the page number of search results.
+  **Parameters**:
+  - `query` (required): The name of the content.
+  - `search_type` (optional): The type of content to search for (either `movie` or `series`). Defaults to `movie`.
+  - `page` (optional): The page number of search results. Defaults to 1.
 
-**Returns**: A dictionary with titles and URLs of search results.
+  **Example**:
+  ```bash
+  curl "http://127.0.0.1:8000/search/?query=batman&search_type=movie&page=1"
+  ```
+
+  **Response**:
+  ```json
+  [
+    {
+      "title": "Batman",
+      "url": "/movie/batman"
+    },
+    {
+      "title": "Batman Returns",
+      "url": "/movie/batman-returns"
+    }
+  ]
+  ```
 
 ### 2. Get Content Information
 
-```python
-info = await get_info("https://ak.sv/some-content-url")
-```
+- **GET /info/**  
+  Get detailed information about specific content from Akwam.
 
-- `url`: The content URL from Akwam.
+  **Parameters**:
+  - `url` (required): The URL of the content from Akwam.
 
-**Returns**: A dictionary containing the media's title, poster URL, and additional information.
+  **Example**:
+  ```bash
+  curl "http://127.0.0.1:8000/info/?url=https://ak.sv/movie/batman"
+  ```
+
+  **Response**:
+  ```json
+  {
+    "poster": "https://ak.sv/images/poster.jpg",
+    "title": "Batman",
+    "remains_info": ["Year: 1989", "Genre: Action", "Duration: 126 mins"]
+  }
+  ```
 
 ### 3. Get Content Download URLs
 
-```python
-urls = await get_content_urls("https://ak.sv/some-content-url")
-```
+- **GET /content_urls/**  
+  Fetch direct download links for a specific content from Akwam.
 
-- `url`: The content URL from Akwam.
+  **Parameters**:
+  - `url` (required): The content URL from Akwam.
 
-**Returns**: A list of dictionaries containing the download URLs and file sizes.
+  **Example**:
+  ```bash
+  curl "http://127.0.0.1:8000/content_urls/?url=https://ak.sv/movie/batman"
+  ```
 
-### 4. Get Season Episodes
+  **Response**:
+  ```json
+  [
+    {
+      "url": "https://ak.sv/download/batman-1080p.mp4",
+      "size": "1.4 GB"
+    },
+    {
+      "url": "https://ak.sv/download/batman-720p.mp4",
+      "size": "850 MB"
+    }
+  ]
+  ```
 
-```python
-episodes = await get_episodes("https://ak.sv/season-url")
-```
+### 4. Get Episodes for a Season
 
-- `url`: The season URL from Akwam.
+- **GET /episodes/**  
+  Retrieve a list of episodes for a specific season of a series.
 
-**Returns**: A list of episodes, each containing the episode title, URL, and thumbnail.
+  **Parameters**:
+  - `url` (required): The URL of the season from Akwam.
 
-## Error Handling
+  **Example**:
+  ```bash
+  curl "http://127.0.0.1:8000/episodes/?url=https://ak.sv/series/season-1"
+  ```
 
-The functions handle network errors and unexpected status codes gracefully, returning a dictionary with the error message and status code when applicable.
+  **Response**:
+  ```json
+  [
+    {
+      "title": "Episode 1",
+      "url": "/episode/1",
+      "thumbnail": "https://ak.sv/images/ep1-thumb.jpg"
+    },
+    {
+      "title": "Episode 2",
+      "url": "/episode/2",
+      "thumbnail": "https://ak.sv/images/ep2-thumb.jpg"
+    }
+  ]
+  ```
 
-## License
+## Conclusion
 
-This project is licensed under the MIT License.
+This API provides access to various content-related features on Akwam, including searching for media, retrieving detailed content information, downloading content URLs, and getting episode lists. It is built using FastAPI and offers asynchronous handling of requests for better performance.
